@@ -4,54 +4,69 @@
     <script src="assets/promise.min.js"></script>
     <script type="text/javascript">
 
+      function toImage() {
+         promise.post('/generate', editor.getValue()).then(function(error, text, xhr) {
+             if (error) {
+                 console.log('Error ' + xhr.status);
+                 return;
+             }
+             var data = JSON.parse(text);
+             if (data.image) {
+                document.getElementById("generatedImage").src = data.image;
+                document.getElementById("status").innerHTML = "Success!";
+             } else {
+                document.getElementById("status").innerHTML = "ERROR: " + data.error;
+             }
+         });
+
+        return false;
+      }
+
+      var editor = null;
       window.onload = function() {
         var a = document.getElementById("generateLink");
-        a.onclick = function() {
-           promise.post('/generate', editor.getValue()).then(function(error, text, xhr) {
-               if (error) {
-                   console.log('Error ' + xhr.status);
-                   return;
-               }
-               var data = JSON.parse(text);
-               if (data.image) {
-                  document.getElementById("generatedImage").src = window.location.href + data.image;
-                  document.getElementById("status").innerHTML = "Success!";
-               } else {
-                  document.getElementById("status").innerHTML = "ERROR: " + data.error;
-               }
-           });
+        a.onclick = toImage
 
-          return false;
+        console.log(document.querySelector('.editorArea').clientHeight)
+        // document.querySelector('.editorArea').style.height = document.querySelector('.editorArea').clientHeight + 'px'
+
+      editor = CodeMirror.fromTextArea(myTextarea, {
+        lineNumbers: true,
+       extraKeys: {
+            "Cmd-Enter": function(cm) {
+                toImage()
+            },
+            "Ctrl-Enter": function(cm) {
+                toImage()
+            }
         }
+      });
+      editor.setValue(atob(document.location.hash.substr(1)))
+      toImage()
+      editor.on("change",function(cm,change){
+        document.location.hash = btoa(editor.getValue())
+      });
+
       }
     </script>
 </head>
 <body>
-<div class="header">
-    <h1>Erd Web Server:</h1>
-    <h2>Generating Entity-Relationship diagrams from text</h2>
-</div>
 <div class="main">
     <link rel="stylesheet" href="assets/codemirror.css">
     <script src="assets/codemirror.js"></script>
 
     <div class="editorArea">
-    <textarea id=myTextarea></textarea>
-</div>
+      <textarea id=myTextarea></textarea>
+    </div>
     <script>
-      var editor = CodeMirror.fromTextArea(myTextarea, {
-        lineNumbers: true
-      });
 
     </script>
 
 <div class="diagramArea">
     <img id="generatedImage" alt="data url loaded image" />
 </div>
-    <br>
-    <span id="status">Generate something!</span>
-    <a id="generateLink" href="#">Generate Diagram</a>
-
+    <a id="generateLink" href="#">Generate Diagram or Cmd+Enter</a>
+    <span id="status"></span>
 </div>
 </body>
 </html>
